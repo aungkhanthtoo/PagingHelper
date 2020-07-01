@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -67,7 +68,9 @@ public abstract class PagingListAdapter<T, VH extends RecyclerView.ViewHolder> e
             loading = false;
             final int position = loadingPosition;
             loadingPosition = getDataItemCount();
-            notifyItemRemoved(position);
+            List<T> currentList = new ArrayList<>(getCurrentList());
+            currentList.remove(position);
+            submitList(currentList);
         }
     }
 
