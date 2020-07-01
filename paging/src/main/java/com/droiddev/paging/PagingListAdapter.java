@@ -41,7 +41,7 @@ public abstract class PagingListAdapter<T, VH extends RecyclerView.ViewHolder> e
     @Override
     public final void onBindViewHolder(@NonNull VH holder, int position) {
         if (!getCurrentList().isEmpty() && position != loadingPosition) {
-            onBindItemViewHolder(holder, position);
+            onBindItemViewHolder(holder, position < loadingPosition ? position : position + 1);
         }
     }
 
