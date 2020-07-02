@@ -10,7 +10,7 @@ import com.droiddev.paging.PagingHelper
 class MoviesViewModel : ViewModel(), PagingHelper.Callback {
 
     private val _pages = MutableLiveData<Int>()
-    val topRatedMovies = _pages.switchMap { MovieRepositoryImpl.getPopularMovies(it) }
+    val topRatedMovies = _pages.switchMap { MovieRemoteDataSource.getPopularMovies(it) }
 
     override fun onLoadMore(nextPage: Int) {
         _pages.value = nextPage

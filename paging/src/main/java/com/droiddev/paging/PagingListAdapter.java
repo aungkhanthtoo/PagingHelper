@@ -54,7 +54,7 @@ public abstract class PagingListAdapter<T, VH extends RecyclerView.ViewHolder> e
                 return;
             }
         }
-        submitList(pageList, () -> mHandler.post(this::hideLoading));
+        submitList(pageList, this::hideLoading);
     }
 
     @Override

@@ -32,7 +32,7 @@ data class Movie(
     val adult: Boolean,
 
     @SerializedName("backdrop_path")
-    @ColumnInfo(name = "backdrop_path") val backdropPath: String,
+    @ColumnInfo(name = "backdrop_path") val backdropPath: String?,
 
     @SerializedName("original_language")
     @ColumnInfo(name = "original_language") val originalLanguage: String,
@@ -47,7 +47,7 @@ data class Movie(
     val popularity: Double,
 
     @SerializedName("poster_path")
-    @ColumnInfo(name = "poster_path") val posterPath: String,
+    @ColumnInfo(name = "poster_path") val posterPath: String?,
 
     @SerializedName("release_date")
     @ColumnInfo(name = "release_date") val releaseDate: String,

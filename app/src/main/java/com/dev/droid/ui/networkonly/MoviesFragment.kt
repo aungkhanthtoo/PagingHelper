@@ -21,7 +21,7 @@ class MoviesFragment : Fragment() {
 
     private val pagingHelper = PagingHelper()
     private val pagingAdapter: PagingHelper.LoadingAdapter<Movie, MovieViewHolder> =
-        MovieListAdapter()
+        MovieAdapter()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -44,7 +44,8 @@ class MoviesFragment : Fragment() {
 
         viewModel.topRatedMovies.observe(viewLifecycleOwner, ::showError) { response ->
             pagingHelper.totalPages = response.totalPages
-            rvMovie.postDelayed({ pagingAdapter.setPaging(response.movies) }, 900)
+            //rvMovie.postDelayed({ pagingAdapter.setPaging(response.movies) }, 900)
+            pagingAdapter.setPaging(response.movies)
             stopIfRefreshing()
         }
     }

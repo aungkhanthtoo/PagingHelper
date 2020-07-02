@@ -25,7 +25,7 @@ public abstract class PagingAdapter<T, VH extends RecyclerView.ViewHolder> exten
         registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override
             public void onItemRangeInserted(int positionStart, int itemCount) {
-                if (positionStart != 0 && getItemCount() != positionStart) {
+                if (positionStart > loadingPosition) {
                     handler.postDelayed(PagingAdapter.this::hideLoading, 50);
                 }
             }
