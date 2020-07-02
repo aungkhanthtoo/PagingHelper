@@ -8,6 +8,8 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.List;
+
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -24,6 +26,7 @@ public class PagingHelper extends RecyclerView.OnScrollListener {
     private int mTotalPages = Integer.MAX_VALUE;
     private boolean mFetchOnAttach = true;
     private boolean refreshing = true;
+    private boolean idle = true;
 
     private Callback mCallback;
     private RecyclerView mRecyclerView;
@@ -39,10 +42,6 @@ public class PagingHelper extends RecyclerView.OnScrollListener {
 
         @Override
         public void onItemRangeInserted(int positionStart, int itemCount) {
-            if (positionStart != getItemCount()) {
-                mRecyclerView.postDelayed(mController::hideLoading, 50);
-            }
-
             onItemRangeChanged(positionStart, itemCount);
         }
 
@@ -50,8 +49,15 @@ public class PagingHelper extends RecyclerView.OnScrollListener {
         public void onItemRangeChanged(int positionStart, int itemCount) {
             if (positionStart == 0 && refreshing) {
                 setRefreshing(false);
-                if (mPageSize == DEFAULT_PAGE_SIZE) {
-                    mPageSize = requireNonNull(((LoadingAdapter) mRecyclerView.getAdapter())).getDataItemCount();
+                if (idle) {
+                    idle = false;
+                    if (mPageSize == DEFAULT_PAGE_SIZE) {
+                        if (mRecyclerView.getAdapter() instanceof PagingAdapter) {
+                            mPageSize = mRecyclerView.getAdapter().getItemCount();
+                        } else {
+                            throw new IllegalStateException("PagingHelper cannot infer pageSize for PagingListAdapter, set PageSize explicitly!");
+                        }
+                    }
                 }
             }
         }
@@ -275,7 +281,7 @@ public class PagingHelper extends RecyclerView.OnScrollListener {
         void setRefreshing(boolean refreshing);
     }
 
-    public interface LoadingAdapter<VH extends RecyclerView.ViewHolder> extends LoadingController {
+    public interface LoadingAdapter<T, VH extends RecyclerView.ViewHolder> extends LoadingController {
 
         int getDataItemCount();
 
@@ -286,6 +292,8 @@ public class PagingHelper extends RecyclerView.OnScrollListener {
         VH onCreateItemViewHolder(@NonNull ViewGroup parent, int viewType);
 
         void onBindItemViewHolder(@NonNull VH holder, int position);
+
+        void setPaging(@NonNull List<T> pageList);
     }
 
     @FunctionalInterface

@@ -7,16 +7,21 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.RecyclerView
 import com.dev.droid.R
+import com.dev.droid.data.network.Movie
 import com.dev.droid.data.network.livedatacalladapter.observe
+import com.dev.droid.ui.networkroom.MovieListAdapter
 import com.droiddev.paging.PagingHelper
 import kotlinx.android.synthetic.main.main_fragment.*
 
 class MoviesFragment : Fragment() {
 
     private val viewModel: MoviesViewModel by viewModels()
+
     private val pagingHelper = PagingHelper()
-    private val pagingAdapter = MovieAdapter()
+    private val pagingAdapter: PagingHelper.LoadingAdapter<Movie, MovieViewHolder> =
+        MovieListAdapter()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -26,31 +31,31 @@ class MoviesFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        pagingHelper.threshold = 2
-        pagingHelper.onLoadMore = viewModel
         with(rvMovie) {
             setHasFixedSize(true)
-            adapter = pagingAdapter
-            pagingHelper.attachToRecyclerView(this)
+            adapter = pagingAdapter as RecyclerView.Adapter<*>
         }
+
+        pagingHelper.onLoadMore = viewModel
+        pagingHelper.threshold = 2
+        pagingHelper.pageSize = 20 // need to set before calling setPaging() for PagingListAdapter Type!
+        pagingHelper.attachToRecyclerView(rvMovie)
         refresh.setOnRefreshListener(pagingHelper::refresh)
 
         viewModel.topRatedMovies.observe(viewLifecycleOwner, ::showError) { response ->
             pagingHelper.totalPages = response.totalPages
-            rvMovie.postDelayed({
-                pagingAdapter.setPaging(response.movies)
-            }, 900)
-
-            stopRefreshing()
+            rvMovie.postDelayed({ pagingAdapter.setPaging(response.movies) }, 900)
+            stopIfRefreshing()
         }
     }
 
     private fun showError(msg: String) {
         Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
-        stopRefreshing()
+        stopIfRefreshing()
+        pagingHelper.fallback()
     }
 
-    private fun stopRefreshing() {
+    private fun stopIfRefreshing() {
         if (refresh.isRefreshing) {
             refresh.isRefreshing = false
         }

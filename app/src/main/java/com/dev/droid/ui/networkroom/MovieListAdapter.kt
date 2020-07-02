@@ -11,7 +11,7 @@ import com.droiddev.paging.PagingListAdapter
 /**
  * Created with love by A.K.HTOO on 01/07/2020,July,2020.
  */
-class MovieListAdapter() : PagingListAdapter<Movie, MovieViewHolder>(DIFF_CALLBACK) {
+class MovieListAdapter : PagingListAdapter<Movie, MovieViewHolder>(DIFF_CALLBACK) {
 
     override fun getLoadingItemLayoutRes(): Int {
         return R.layout.item_loading
@@ -31,7 +31,7 @@ class MovieListAdapter() : PagingListAdapter<Movie, MovieViewHolder>(DIFF_CALLBA
 
         val DIFF_CALLBACK = object : DiffUtil.ItemCallback<Movie>() {
             override fun areItemsTheSame(oldItem: Movie, newItem: Movie): Boolean {
-                return oldItem.id == newItem.id
+                return oldItem.movieId == newItem.movieId
             }
 
             override fun areContentsTheSame(oldItem: Movie, newItem: Movie): Boolean {

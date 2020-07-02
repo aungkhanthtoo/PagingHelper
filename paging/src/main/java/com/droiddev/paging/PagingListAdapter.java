@@ -1,5 +1,7 @@
 package com.droiddev.paging;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
@@ -8,17 +10,17 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created with love by A.K.HTOO on 01/07/2020,July,2020.
  */
-public abstract class PagingListAdapter<T, VH extends RecyclerView.ViewHolder> extends ListAdapter<T, VH> implements PagingHelper.LoadingAdapter<VH> {
+public abstract class PagingListAdapter<T, VH extends RecyclerView.ViewHolder> extends ListAdapter<T, VH> implements PagingHelper.LoadingAdapter<T, VH> {
 
     boolean loading;
     boolean refreshing;
     int loadingPosition = Integer.MAX_VALUE;
+    private Handler mHandler = new Handler(Looper.getMainLooper());
 
     protected PagingListAdapter(@NonNull DiffUtil.ItemCallback<T> diffCallback) {
         super(diffCallback);
@@ -42,15 +44,17 @@ public abstract class PagingListAdapter<T, VH extends RecyclerView.ViewHolder> e
     @Override
     public final void onBindViewHolder(@NonNull VH holder, int position) {
         if (!getCurrentList().isEmpty() && position != loadingPosition) {
-            onBindItemViewHolder(holder, position);
+            onBindItemViewHolder(holder, position < loadingPosition ? position : position - 1);
         }
     }
 
     public final void setPaging(@NonNull List<T> pageList) {
         if (!refreshing) {
-            pageList.add(0, null); // loading item
+            if (getCurrentList().size() == pageList.size()) {
+                return;
+            }
         }
-        submitList(pageList);
+        submitList(pageList, () -> mHandler.post(this::hideLoading));
     }
 
     @Override
@@ -67,10 +71,8 @@ public abstract class PagingListAdapter<T, VH extends RecyclerView.ViewHolder> e
         if (loading) {
             loading = false;
             final int position = loadingPosition;
-            loadingPosition = getDataItemCount();
-            List<T> currentList = new ArrayList<>(getCurrentList());
-            currentList.remove(position);
-            submitList(currentList);
+            loadingPosition = getCurrentList().size();
+            notifyItemRemoved(position);
         }
     }
 
@@ -86,9 +88,7 @@ public abstract class PagingListAdapter<T, VH extends RecyclerView.ViewHolder> e
 
     @Override
     public int getDataItemCount() {
-        int count = 0;
-        for (T e : getCurrentList()) if (e != null) count++;
-        return count;
+        return getCurrentList().size();
     }
 
     @Override

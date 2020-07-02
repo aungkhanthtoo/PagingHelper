@@ -13,13 +13,24 @@ import java.util.List;
 /**
  * Created with love by A.K.HTOO on 28/06/2020,June,2020.
  */
-public abstract class PagingAdapter<T, VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> implements PagingHelper.LoadingAdapter<VH> {
+public abstract class PagingAdapter<T, VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> implements PagingHelper.LoadingAdapter<T, VH> {
 
     protected final List<T> list = new ArrayList<>(0);
     boolean loading;
     boolean refreshing;
     int loadingPosition = Integer.MAX_VALUE;
     private final Handler handler = new Handler(Looper.getMainLooper());
+
+    public PagingAdapter() {
+        registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onItemRangeInserted(int positionStart, int itemCount) {
+                if (positionStart != 0 && getItemCount() != positionStart) {
+                    handler.postDelayed(PagingAdapter.this::hideLoading, 50);
+                }
+            }
+        });
+    }
 
     @NonNull
     @Override
