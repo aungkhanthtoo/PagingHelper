@@ -10,8 +10,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
-import static java.util.Objects.requireNonNull;
-
 /**
  * Created with love by A.K.HTOO on 28/06/2020,June,2020.
  */
@@ -112,7 +110,7 @@ public class PagingHelper extends RecyclerView.OnScrollListener {
     public int getPage() {
         if (mController == null) return 0;
 
-        final int itemCount = getItemCount();
+        final int itemCount = mController.getDataItemCount();
         return mController.isRefreshing() ? 1 : Math.min(itemCount % mPageSize, 1) + itemCount / mPageSize;
     }
 
@@ -177,14 +175,6 @@ public class PagingHelper extends RecyclerView.OnScrollListener {
 
     public void setLayoutHelper(LayoutHelper<? extends RecyclerView.LayoutManager> helper) {
         mLayoutHelper = helper;
-    }
-
-    private int getItemCount() {
-        final RecyclerView.Adapter adapter = requireNonNull(mRecyclerView.getAdapter());
-        if (adapter instanceof LoadingAdapter) {
-            return ((LoadingAdapter) adapter).getDataItemCount();
-        }
-        return adapter.getItemCount();
     }
 
     private void setupCallbacks() throws IllegalStateException {

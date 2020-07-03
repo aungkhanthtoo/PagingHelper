@@ -1,8 +1,8 @@
 package com.dev.droid.data.network.livedatacalladapter
 
+import android.util.Log
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
-import java.lang.RuntimeException
 
 /**
  * Created with love by A.K.HTOO on 30/06/2020,June,2020.
@@ -27,7 +27,7 @@ inline fun <T> ResponseLiveData<T>.observe(
     crossinline onError: (String) -> Unit,
     crossinline onSuccess: (T) -> Unit
 ) {
-    this.observe(owner, object: ResponseObserver<T>(){
+    this.observe(owner, object : ResponseObserver<T>() {
         override fun onSuccess(data: T) {
             onSuccess(data)
         }
@@ -43,10 +43,5 @@ inline fun <T> ResponseLiveData<T>.observe(
     owner: LifecycleOwner,
     crossinline onSuccess: (T) -> Unit
 ) {
-    this.observe(
-        owner,
-        {
-            throw RuntimeException("Error not expected! but $it")
-        },
-        onSuccess)
+    this.observe(owner, { Log.e(ResponseObserver::class.simpleName, it) }, onSuccess)
 }
