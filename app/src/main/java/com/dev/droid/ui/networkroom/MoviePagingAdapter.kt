@@ -6,12 +6,12 @@ import androidx.recyclerview.widget.DiffUtil
 import com.dev.droid.R
 import com.dev.droid.data.network.Movie
 import com.dev.droid.ui.networkonly.MovieViewHolder
-import com.droiddev.paging.PagingListAdapter
+import com.droiddev.paging.PagingAdapter
 
 /**
  * Created with love by A.K.HTOO on 01/07/2020,July,2020.
  */
-class MovieListAdapter : PagingListAdapter<Movie, MovieViewHolder>(DIFF_CALLBACK) {
+class MoviePagingAdapter : PagingAdapter<Movie, MovieViewHolder>(DIFF_CALLBACK) {
 
     override fun getLoadingItemLayoutRes(): Int {
         return R.layout.item_loading

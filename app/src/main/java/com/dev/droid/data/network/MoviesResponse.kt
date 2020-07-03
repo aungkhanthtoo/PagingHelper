@@ -23,8 +23,6 @@ data class MoviesResponse(
 
 @Entity(tableName = "movies")
 data class Movie(
-    @PrimaryKey(autoGenerate = true) val _id: Long,
-
     @SerializedName("id")
     val movieId: Long,
 
@@ -63,4 +61,6 @@ data class Movie(
 
     @SerializedName("vote_count")
     @ColumnInfo(name = "vote_count") val voteCount: Int
-)
+) {
+    @PrimaryKey(autoGenerate = true) var _id: Long = 0
+}

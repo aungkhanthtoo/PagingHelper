@@ -4,12 +4,12 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import com.dev.droid.R
 import com.dev.droid.data.network.Movie
-import com.droiddev.paging.PagingAdapter
+import com.droiddev.paging.LegacyPagingAdapter
 
 /**
  * Created with love by A.K.HTOO on 30/06/2020,June,2020.
  */
-class MovieAdapter : PagingAdapter<Movie, MovieViewHolder>() {
+class MovieAdapter : LegacyPagingAdapter<Movie, MovieViewHolder>() {
 
     override fun getLoadingItemLayoutRes(): Int  = R.layout.item_loading
 

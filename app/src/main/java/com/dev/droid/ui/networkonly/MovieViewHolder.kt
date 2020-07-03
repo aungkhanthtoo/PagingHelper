@@ -4,6 +4,7 @@ import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.dev.droid.GlideApp
+import com.dev.droid.data.network.IMAGE_SIZE_154
 import com.dev.droid.data.network.IMAGE_SIZE_185
 import com.dev.droid.data.network.Movie
 import kotlinx.android.synthetic.main.item_movie.view.*
@@ -23,7 +24,7 @@ class MovieViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         tvDate.text = data.releaseDate
         tvRating.text = data.voteAverage.toString()
         GlideApp.with(itemView.context)
-            .load(IMAGE_SIZE_185 + data.posterPath)
+            .load(IMAGE_SIZE_154 + data.posterPath)
             .transition(DrawableTransitionOptions.withCrossFade())
             .into(image)
     }

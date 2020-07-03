@@ -4,26 +4,33 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
-
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.DiffUtil;
-import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created with love by A.K.HTOO on 01/07/2020,July,2020.
+ * Created with love by A.K.HTOO on 28/06/2020,June,2020.
  */
-public abstract class PagingListAdapter<T, VH extends RecyclerView.ViewHolder> extends ListAdapter<T, VH> implements PagingHelper.LoadingAdapter<T, VH> {
+@Deprecated
+public abstract class LegacyPagingAdapter<T, VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> implements PagingHelper.LoadingAdapter<T, VH> {
 
+    protected final List<T> list = new ArrayList<>(0);
     boolean loading;
     boolean refreshing;
     int loadingPosition = Integer.MAX_VALUE;
-    private Handler mHandler = new Handler(Looper.getMainLooper());
+    private final Handler handler = new Handler(Looper.getMainLooper());
 
-    protected PagingListAdapter(@NonNull DiffUtil.ItemCallback<T> diffCallback) {
-        super(diffCallback);
+    public LegacyPagingAdapter() {
+        registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onItemRangeInserted(int positionStart, int itemCount) {
+                if (positionStart > loadingPosition) {
+                    handler.post(LegacyPagingAdapter.this::hideLoading);
+                }
+            }
+        });
     }
 
     @NonNull
@@ -43,18 +50,28 @@ public abstract class PagingListAdapter<T, VH extends RecyclerView.ViewHolder> e
 
     @Override
     public final void onBindViewHolder(@NonNull VH holder, int position) {
-        if (!getCurrentList().isEmpty() && position != loadingPosition) {
+        if (!list.isEmpty() && position != loadingPosition) {
             onBindItemViewHolder(holder, position < loadingPosition ? position : position - 1);
         }
     }
 
     public final void setPaging(@NonNull List<T> pageList) {
-        if (!refreshing) {
-            if (getCurrentList().size() == pageList.size()) {
-                return;
-            }
+        if (refreshing) {
+            final boolean isEmpty = list.isEmpty();
+            list.clear();
+            list.addAll(pageList);
+
+            handler.post(() -> {
+                if (isEmpty) {
+                    notifyItemRangeInserted(0, pageList.size());
+                } else {
+                    notifyItemRangeChanged(0, pageList.size());
+                }
+            });
+        } else {
+            list.addAll(pageList);
+            handler.post(() -> notifyItemRangeInserted(loadingPosition + 1, pageList.size()));
         }
-        submitList(pageList, this::hideLoading);
     }
 
     @Override
@@ -71,7 +88,7 @@ public abstract class PagingListAdapter<T, VH extends RecyclerView.ViewHolder> e
         if (loading) {
             loading = false;
             final int position = loadingPosition;
-            loadingPosition = getCurrentList().size();
+            loadingPosition = getDataItemCount();
             notifyItemRemoved(position);
         }
     }
@@ -87,13 +104,13 @@ public abstract class PagingListAdapter<T, VH extends RecyclerView.ViewHolder> e
     }
 
     @Override
-    public int getDataItemCount() {
-        return getCurrentList().size();
+    public final int getItemCount() {
+        return loading ? getDataItemCount() + 1 : getDataItemCount();
     }
 
     @Override
-    public final int getItemCount() {
-        return loading ? super.getItemCount() + 1 : super.getItemCount();
+    public int getDataItemCount() {
+        return list.size();
     }
 
     protected int getDataItemViewType(int position) {
@@ -108,4 +125,5 @@ public abstract class PagingListAdapter<T, VH extends RecyclerView.ViewHolder> e
             return getDataItemViewType(position);
         }
     }
+
 }

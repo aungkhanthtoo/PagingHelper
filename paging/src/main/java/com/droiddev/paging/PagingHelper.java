@@ -18,56 +18,20 @@ import static java.util.Objects.requireNonNull;
 public class PagingHelper extends RecyclerView.OnScrollListener {
 
     private static final int DEFAULT_THRESHOLD = 1;
-    private static final int DEFAULT_PAGE_SIZE = 1;
+    private static final int DEFAULT_PAGE_SIZE = 10;
     static final String TAG = "PagingHelper";
 
     private int mThreshold = DEFAULT_THRESHOLD;
     private int mPageSize = DEFAULT_PAGE_SIZE;
     private int mTotalPages = Integer.MAX_VALUE;
     private boolean mFetchOnAttach = true;
-    private boolean refreshing = true;
+
     private boolean idle = true;
 
     private Callback mCallback;
     private RecyclerView mRecyclerView;
     private LoadingAdapter mController;
     private LayoutHelper<? extends RecyclerView.LayoutManager> mLayoutHelper;
-
-    private final RecyclerView.AdapterDataObserver mObserver = new RecyclerView.AdapterDataObserver() {
-
-        @Override
-        public void onChanged() {
-            onItemRangeChanged(0, 0);
-        }
-
-        @Override
-        public void onItemRangeInserted(int positionStart, int itemCount) {
-            onItemRangeChanged(positionStart, itemCount);
-        }
-
-        @Override
-        public void onItemRangeChanged(int positionStart, int itemCount) {
-            if (positionStart == 0 && refreshing) {
-                setRefreshing(false);
-                if (idle) {
-                    idle = false;
-                    if (mPageSize == DEFAULT_PAGE_SIZE) {
-                        if (mRecyclerView.getAdapter() instanceof PagingAdapter) {
-                            mPageSize = mRecyclerView.getAdapter().getItemCount();
-                        } else {
-                            throw new IllegalStateException("PagingHelper cannot infer pageSize for PagingListAdapter, set PageSize explicitly!");
-                        }
-                    }
-                }
-            }
-        }
-
-        @Override
-        public void onItemRangeMoved(int fromPosition, int toPosition, int itemCount) {
-            onItemRangeChanged(toPosition, itemCount);
-        }
-
-    };
 
     private final Runnable loadMoreRunnable = new Runnable() {
 
@@ -133,10 +97,11 @@ public class PagingHelper extends RecyclerView.OnScrollListener {
         int d = mLayoutHelper.canScrollVertically() ? dy : dx;
         d *= mLayoutHelper.isReverseLayout() ? -1 : 1;
 
-        if (d > 0 && !refreshing && !mController.isLoading() && getPage() < mTotalPages) {
-            if (mThreshold >= (mLayoutHelper.getItemCount() - 1 - mLayoutHelper.getLastCompletelyVisibleItemPosition())) {
-                post(loadMoreRunnable);
-            }
+        if (d > 0 &&
+                !mController.isRefreshing() && !mController.isLoading() &&
+                getPage() < mTotalPages &&
+                mThreshold >= mLayoutHelper.getItemCount() - mLayoutHelper.getLastCompletelyVisibleItemPosition() - 1) {
+            post(loadMoreRunnable);
         }
     }
 
@@ -145,18 +110,20 @@ public class PagingHelper extends RecyclerView.OnScrollListener {
     }
 
     public int getPage() {
+        if (mController == null) return 0;
+
         final int itemCount = getItemCount();
-        return refreshing ? 1 : Math.min(itemCount % mPageSize, 1) + itemCount / mPageSize;
+        return mController.isRefreshing() ? 1 : Math.min(itemCount % mPageSize, 1) + itemCount / mPageSize;
     }
 
     public void refresh() {
-        setRefreshing(true);
         mController.hideLoading();
+        mController.setRefreshing(true);
         post(refreshRunnable);
     }
 
     public boolean isRefreshing() {
-        return refreshing;
+        return mController.isRefreshing();
     }
 
     public int getTotalPages() {
@@ -167,11 +134,6 @@ public class PagingHelper extends RecyclerView.OnScrollListener {
         if (total != mTotalPages && total > 1) {
             mTotalPages = total;
         }
-    }
-
-    void setRefreshing(boolean refreshing) {
-        this.refreshing = refreshing;
-        mController.setRefreshing(refreshing);
     }
 
     public int getThreshold() {
@@ -191,6 +153,9 @@ public class PagingHelper extends RecyclerView.OnScrollListener {
     public void setPageSize(int pageSize) {
         if (pageSize > DEFAULT_PAGE_SIZE) {
             mPageSize = pageSize;
+            if (mController != null) {
+                mController.setPageSize(pageSize);
+            }
         }
     }
 
@@ -228,7 +193,7 @@ public class PagingHelper extends RecyclerView.OnScrollListener {
         }
 
         if (mRecyclerView.getAdapter() == null) {
-            throw new IllegalStateException("RecyclerView Adapter must not be null before attaching with PagingHelper!");
+            throw new IllegalStateException("RecyclerView Adapter must be set before attaching with PagingHelper!");
         }
 
         if (!(mRecyclerView.getAdapter() instanceof LoadingAdapter)) {
@@ -242,32 +207,25 @@ public class PagingHelper extends RecyclerView.OnScrollListener {
                 mLayoutHelper = new LinearGridLayoutHelper((LinearLayoutManager) layoutManager);
             } else {
                 throw new IllegalStateException("Unknown LayoutManager class " + layoutManager.getClass().getSimpleName() + "\n" +
-                        "Provide your LayoutHelper via setLayoutHelper");
+                        "Provide your LayoutHelper via setLayoutHelper()");
             }
         }
 
-        if (mController == null) {
-            mController = ((LoadingAdapter) mRecyclerView.getAdapter());
-        }
+        mController = ((LoadingAdapter) mRecyclerView.getAdapter());
+        mController.setPageSize(mPageSize);
 
         mRecyclerView.addOnScrollListener(this);
-        mRecyclerView.getAdapter().registerAdapterDataObserver(mObserver);
 
         if (mFetchOnAttach) refresh();
     }
 
     private void destroyCallbacks() {
         mRecyclerView.removeOnScrollListener(this);
-        requireNonNull(mRecyclerView.getAdapter()).unregisterAdapterDataObserver(mObserver);
     }
 
     private void post(Runnable runnable) {
         mRecyclerView.removeCallbacks(runnable);
         mRecyclerView.post(runnable);
-    }
-
-    private void setupLayoutHelper() throws IllegalStateException {
-
     }
 
     public interface LoadingController {
@@ -279,6 +237,8 @@ public class PagingHelper extends RecyclerView.OnScrollListener {
         boolean isLoading();
 
         void setRefreshing(boolean refreshing);
+
+        boolean isRefreshing();
     }
 
     public interface LoadingAdapter<T, VH extends RecyclerView.ViewHolder> extends LoadingController {
@@ -294,6 +254,8 @@ public class PagingHelper extends RecyclerView.OnScrollListener {
         void onBindItemViewHolder(@NonNull VH holder, int position);
 
         void setPaging(@NonNull List<T> pageList);
+
+        void setPageSize(int pageSize);
     }
 
     @FunctionalInterface

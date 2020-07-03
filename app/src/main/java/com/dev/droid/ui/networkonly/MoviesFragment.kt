@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.dev.droid.R
 import com.dev.droid.data.network.Movie
 import com.dev.droid.data.network.livedatacalladapter.observe
-import com.dev.droid.ui.networkroom.MovieListAdapter
+import com.dev.droid.ui.networkroom.MoviePagingAdapter
 import com.droiddev.paging.PagingHelper
 import kotlinx.android.synthetic.main.main_fragment.*
 
@@ -21,7 +21,7 @@ class MoviesFragment : Fragment() {
 
     private val pagingHelper = PagingHelper()
     private val pagingAdapter: PagingHelper.LoadingAdapter<Movie, MovieViewHolder> =
-        MovieAdapter()
+        MoviePagingAdapter()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -38,13 +38,12 @@ class MoviesFragment : Fragment() {
 
         pagingHelper.onLoadMore = viewModel
         pagingHelper.threshold = 2
-        pagingHelper.pageSize = 20 // need to set before calling setPaging() for PagingListAdapter Type!
+        pagingHelper.pageSize = 20
         pagingHelper.attachToRecyclerView(rvMovie)
         refresh.setOnRefreshListener(pagingHelper::refresh)
 
         viewModel.topRatedMovies.observe(viewLifecycleOwner, ::showError) { response ->
             pagingHelper.totalPages = response.totalPages
-            //rvMovie.postDelayed({ pagingAdapter.setPaging(response.movies) }, 900)
             pagingAdapter.setPaging(response.movies)
             stopIfRefreshing()
         }

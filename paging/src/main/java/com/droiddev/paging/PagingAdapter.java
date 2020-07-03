@@ -4,32 +4,98 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
+
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created with love by A.K.HTOO on 28/06/2020,June,2020.
+ * Created with love by A.K.HTOO on 01/07/2020,July,2020.
  */
-public abstract class PagingAdapter<T, VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> implements PagingHelper.LoadingAdapter<T, VH> {
+public abstract class PagingAdapter<T, VH extends RecyclerView.ViewHolder> extends ListAdapter<T, VH> implements PagingHelper.LoadingAdapter<T, VH> {
 
-    protected final List<T> list = new ArrayList<>(0);
     boolean loading;
     boolean refreshing;
+    int mPageSize;
     int loadingPosition = Integer.MAX_VALUE;
-    private final Handler handler = new Handler(Looper.getMainLooper());
+    private Handler mHandler = new Handler(Looper.getMainLooper());
+    private DiffUtil.ItemCallback<T> diff;
 
-    public PagingAdapter() {
-        registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
-            @Override
-            public void onItemRangeInserted(int positionStart, int itemCount) {
-                if (positionStart > loadingPosition) {
-                    handler.postDelayed(PagingAdapter.this::hideLoading, 50);
-                }
-            }
-        });
+    protected PagingAdapter(@NonNull DiffUtil.ItemCallback<T> diffCallback) {
+        super(diffCallback);
+        diff = diffCallback;
+    }
+
+    public final void setPaging(@NonNull List<T> pageList) {
+        if (!refreshing && computeDiff(pageList)) {
+            pageList.addAll(0, getCurrentList()); // for network only paging
+        }
+        submitList(pageList);
+    }
+
+    @Override
+    public void showLoading() {
+        if (!loading) {
+            loading = true;
+            loadingPosition = getDataItemCount();
+            notifyItemInserted(loadingPosition);
+        }
+    }
+
+    @Override
+    public void hideLoading() {
+        if (loading) {
+            loading = false;
+            final int position = loadingPosition;
+            loadingPosition = getCurrentList().size();
+            notifyItemRemoved(position);
+        }
+    }
+
+    @Override
+    public void setPageSize(int pageSize) {
+        mPageSize = pageSize;
+    }
+
+    @Override
+    public boolean isLoading() {
+        return loading;
+    }
+
+    @Override
+    public void setRefreshing(boolean refreshing) {
+        this.refreshing = refreshing;
+    }
+
+    @Override
+    public boolean isRefreshing() {
+        return refreshing;
+    }
+
+    @Override
+    public int getDataItemCount() {
+        return getCurrentList().size();
+    }
+
+    @Override
+    public final int getItemCount() {
+        return loading ? super.getItemCount() + 1 : super.getItemCount();
+    }
+
+    protected int getDataItemViewType(int position) {
+        return super.getItemViewType(position);
+    }
+
+    @Override
+    public final int getItemViewType(int position) {
+        if (position == loadingPosition) {
+            return getLoadingItemLayoutRes();
+        } else {
+            return getDataItemViewType(position);
+        }
     }
 
     @NonNull
@@ -49,80 +115,43 @@ public abstract class PagingAdapter<T, VH extends RecyclerView.ViewHolder> exten
 
     @Override
     public final void onBindViewHolder(@NonNull VH holder, int position) {
-        if (!list.isEmpty() && position != loadingPosition) {
+        if (!getCurrentList().isEmpty() && position != loadingPosition) {
             onBindItemViewHolder(holder, position < loadingPosition ? position : position - 1);
         }
     }
 
-    public final void setPaging(@NonNull List<T> pageList) {
-        if (refreshing) {
-            final boolean isEmpty = list.isEmpty();
-            list.clear();
-            list.addAll(pageList);
-
-            handler.post(() -> {
-                if (isEmpty) {
-                    notifyItemRangeInserted(0, pageList.size());
-                } else {
-                    notifyItemRangeChanged(0, pageList.size());
-                }
-            });
-        } else {
-            list.addAll(pageList);
-            handler.post(() -> notifyItemRangeInserted(loadingPosition + 1, pageList.size()));
+    @Override
+    public void onCurrentListChanged(@NonNull List<T> previousList, @NonNull List<T> currentList) {
+        if (previousList.size() < currentList.size()) {
+            hideLoading();
+        }
+        if (refreshing && currentList.size() == mPageSize) {
+            refreshing = false;
         }
     }
 
-    @Override
-    public void showLoading() {
-        if (!loading) {
-            loading = true;
-            loadingPosition = getDataItemCount();
-            notifyItemInserted(loadingPosition);
+    private boolean computeDiff(List<T> pageList) {
+        if (pageList.size() < getCurrentList().size()) return true;
+
+        if (getCurrentList().isEmpty() || pageList.size() > getCurrentList().size()) {
+            return false;
         }
-    }
-
-    @Override
-    public void hideLoading() {
-        if (loading) {
-            loading = false;
-            final int position = loadingPosition;
-            loadingPosition = getDataItemCount();
-            notifyItemRemoved(position);
+        T oldItem = getCurrentList().get(0);
+        T newItem = pageList.get(0);
+        if (diff.areItemsTheSame(oldItem, newItem) && diff.areContentsTheSame(oldItem, newItem)) {
+            return false;
         }
-    }
-
-    @Override
-    public boolean isLoading() {
-        return loading;
-    }
-
-    @Override
-    public void setRefreshing(boolean refreshing) {
-        this.refreshing = refreshing;
-    }
-
-    @Override
-    public final int getItemCount() {
-        return loading ? getDataItemCount() + 1 : getDataItemCount();
-    }
-
-    @Override
-    public int getDataItemCount() {
-        return list.size();
-    }
-
-    protected int getDataItemViewType(int position) {
-        return super.getItemViewType(position);
-    }
-
-    @Override
-    public final int getItemViewType(int position) {
-        if (position == loadingPosition) {
-            return getLoadingItemLayoutRes();
-        } else {
-            return getDataItemViewType(position);
+        oldItem = getCurrentList().get(getCurrentList().size() - 1);
+        newItem = pageList.get(pageList.size() - 1);
+        if (diff.areItemsTheSame(oldItem, newItem) && diff.areContentsTheSame(oldItem, newItem)) {
+            return false;
         }
-    }
+        oldItem = getCurrentList().get(getCurrentList().size() / 2);
+        newItem = pageList.get(pageList.size() / 2);
+        if (diff.areItemsTheSame(oldItem, newItem) && diff.areContentsTheSame(oldItem, newItem)) {
+            return false;
+        }
 
+        return true;
+    }
 }
