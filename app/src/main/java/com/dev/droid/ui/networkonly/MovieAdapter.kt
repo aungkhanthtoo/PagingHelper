@@ -9,7 +9,7 @@ import com.droiddev.paging.LegacyPagingAdapter
 /**
  * Created with love by A.K.HTOO on 30/06/2020,June,2020.
  */
-class MovieAdapter : LegacyPagingAdapter<Movie, MovieViewHolder>() {
+abstract class MovieAdapter : LegacyPagingAdapter<Movie, MovieViewHolder>() {
 
     override fun getLoadingItemLayoutRes(): Int  = R.layout.item_loading
 

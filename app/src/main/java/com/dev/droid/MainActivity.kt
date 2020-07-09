@@ -2,6 +2,7 @@ package com.dev.droid
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import com.dev.droid.ui.networkonly.MovieGridFragment
 import com.dev.droid.ui.networkonly.MoviesFragment
 
 class MainActivity : AppCompatActivity() {
@@ -11,7 +12,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.main_activity)
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
-                .replace(R.id.container, MoviesFragment.newInstance())
+                .replace(R.id.container, MovieGridFragment.newInstance())
                 .commitNow()
         }
     }
