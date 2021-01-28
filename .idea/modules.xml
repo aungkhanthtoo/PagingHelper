@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/PagingHelper.iml" filepath="$PROJECT_DIR$/.idea/modules/PagingHelper.iml" group="PagingHelper" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/app.iml" group="PagingHelper/app" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/paging/paging.iml" filepath="$PROJECT_DIR$/.idea/modules/paging/paging.iml" group="PagingHelper/paging" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/PagingHelper.iml" filepath="$PROJECT_DIR$/.idea/modules/PagingHelper.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/PagingHelper.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/PagingHelper.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/paging/PagingHelper.paging.iml" filepath="$PROJECT_DIR$/.idea/modules/paging/PagingHelper.paging.iml" />
     </modules>
   </component>
 </project>

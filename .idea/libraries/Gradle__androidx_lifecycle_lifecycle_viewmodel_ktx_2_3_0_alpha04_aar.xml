@@ -3,6 +3,7 @@
     <CLASSES>
       <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/c52a37c7d976531a57f32f3cecf04908/jetified-lifecycle-viewmodel-ktx-2.3.0-alpha04/jars/classes.jar!/" />
       <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/c52a37c7d976531a57f32f3cecf04908/jetified-lifecycle-viewmodel-ktx-2.3.0-alpha04/res" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/c52a37c7d976531a57f32f3cecf04908/jetified-lifecycle-viewmodel-ktx-2.3.0-alpha04/AndroidManifest.xml" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>

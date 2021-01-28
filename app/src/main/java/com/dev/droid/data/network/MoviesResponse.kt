@@ -48,7 +48,7 @@ data class Movie(
     @ColumnInfo(name = "poster_path") val posterPath: String?,
 
     @SerializedName("release_date")
-    @ColumnInfo(name = "release_date") val releaseDate: String,
+    @ColumnInfo(name = "release_date") val releaseDate: String?,
 
     @SerializedName("title")
     val title: String,
